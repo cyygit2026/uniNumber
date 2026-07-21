@@ -29,9 +29,9 @@
         <div>
             <label class="block text-sm font-medium text-gray-700">选择运营商</label>
             <div class="flex space-x-4 mt-2">
-                <label v-for="op in operators" :key="op" class="flex items-center">
-                    <input type="radio" v-model="selectedOp" :value="op" class="mr-2">
-                    <span>{{op}}</span>
+                <label v-for="opName in opNames" :key="opName" class="flex items-center">
+                    <input type="radio" v-model="selectedOp" :value="opName" class="mr-2">
+                    <span>{{opName}}</span>
                 </label>
             </div>
         </div>
@@ -59,6 +59,7 @@
                 "中国电信": ["133", "153", "180", "181", "189", "177", "173", "199"],
                 "中国广电": ["192"]
             };
+            const opNames = Object.keys(operators);
 
             const provinceData = [
                 "北京市", "天津市", "河北省", "山西省", "内蒙古自治区",
@@ -107,12 +108,13 @@
                 "台湾省": ["台北市", "新北市", "桃园市", "台中市", "台南市", "高雄市", "基隆市", "新竹市", "嘉义市"]
             };
 
-            const citiesByPrefix = {
-                "010": ["北京市"],
+            const cityPrefixMap = {};
+            const prefixCityMap = {
+                "010": ["北京市", "东城区", "西城区", "朝阳区", "丰台区", "石景山区", "海淀区", "门头沟区", "房山区", "通州区", "顺义区", "昌平区", "大兴区", "怀柔区", "平谷区", "密云区", "延庆区"],
                 "020": ["广州市"],
-                "021": ["上海市"],
-                "022": ["天津市"],
-                "023": ["重庆市"],
+                "021": ["上海市", "黄浦区", "徐汇区", "长宁区", "静安区", "普陀区", "虹口区", "杨浦区", "闵行区", "宝山区", "嘉定区", "浦东新区", "金山区", "松江区", "青浦区", "奉贤区", "崇明区"],
+                "022": ["天津市", "和平区", "河东区", "河西区", "南开区", "河北区", "红桥区", "东丽区", "西青区", "津南区", "北辰区", "武清区", "宝坻区", "滨海新区", "宁河区", "静海区", "蓟州区"],
+                "023": ["重庆市", "万州区", "涪陵区", "渝中区", "大渡口区", "江北区", "沙坪坝区", "九龙坡区", "南岸区", "北碚区", "綦江区", "大足区", "渝北区", "巴南区", "黔江区", "长寿区", "江津区", "合川区", "永川区", "南川区", "璧山区", "铜梁区", "潼南区", "荣昌区", "开州区", "梁平区", "武隆区"],
                 "024": ["沈阳市", "抚顺市", "本溪市", "铁岭市"],
                 "025": ["南京市"],
                 "027": ["武汉市"],
@@ -169,13 +171,13 @@
                 "0573": ["嘉兴市"],
                 "0575": ["绍兴市"],
                 "0579": ["金华市"],
+                "0552": ["蚌埠市"],
+                "0553": ["芜湖市"],
                 "0572": ["湖州市"],
                 "0580": ["舟山市"],
                 "0576": ["台州市"],
                 "0578": ["丽水市"],
                 "0516": ["徐州市"],
-                "0552": ["蚌埠市"],
-                "0553": ["芜湖市"],
                 "0554": ["淮南市"],
                 "0555": ["马鞍山市"],
                 "0556": ["安庆市"],
@@ -333,34 +335,27 @@
                 "0464": ["七台河市"]
             };
 
-            const provincePrefixMap = {};
-            Object.keys(cityData).forEach(province => {
-                provincePrefixMap[province] = [];
-                cityData[province].forEach(city => {
-                    for (const [prefix, cities] of Object.entries(citiesByPrefix)) {
-                        if (cities.includes(city)) {
-                            if (!provincePrefixMap[province].includes(prefix)) {
-                                provincePrefixMap[province].push(prefix);
-                            }
-                        }
-                    }
+            Object.keys(prefixCityMap).forEach(prefix => {
+                prefixCityMap[prefix].forEach(city => {
+                    if (!cityPrefixMap[city]) cityPrefixMap[city] = [];
+                    if (!cityPrefixMap[city].includes(prefix)) cityPrefixMap[city].push(prefix);
                 });
-                if (provincePrefixMap[province].length === 0) {
-                    provincePrefixMap[province] = ["000", "001", "002", "003", "004"];
-                }
             });
 
-            const cityPrefixMap = {};
             Object.keys(cityData).forEach(province => {
                 cityData[province].forEach(city => {
-                    cityPrefixMap[city] = [];
-                    for (const [prefix, cities] of Object.entries(citiesByPrefix)) {
-                        if (cities.includes(city)) {
-                            cityPrefixMap[city].push(prefix);
+                    if (!cityPrefixMap[city]) {
+                        cityPrefixMap[city] = [];
+                        Object.keys(prefixCityMap).forEach(prefix => {
+                            if (prefixCityMap[prefix].includes(province)) {
+                                if (!cityPrefixMap[city].includes(prefix)) {
+                                    cityPrefixMap[city].push(prefix);
+                                }
+                            }
+                        });
+                        if (cityPrefixMap[city].length === 0) {
+                            cityPrefixMap[city] = ["000", "001", "002", "003", "004"];
                         }
-                    }
-                    if (cityPrefixMap[city].length === 0) {
-                        cityPrefixMap[city] = provincePrefixMap[province] || ["000", "001", "002", "003", "004"];
                     }
                 });
             });
@@ -374,13 +369,17 @@
             const cities = computed(() => cityData[selectedProv.value] || []);
 
             watch(selectedProv, () => {
-                selectedCity.value = "";
-                generatedNumber.value = "";
+                setTimeout(() => {
+                    selectedCity.value = "";
+                    generatedNumber.value = "";
+                }, 0);
             });
 
             const onProvinceChange = () => {
-                selectedCity.value = "";
-                generatedNumber.value = "";
+                setTimeout(() => {
+                    selectedCity.value = "";
+                    generatedNumber.value = "";
+                }, 0);
             };
 
             const generatePhone = () => {
@@ -390,17 +389,17 @@
                 }
 
                 const opPrefixes = operators[selectedOp.value];
-                const prefixes = cityPrefixMap[selectedCity.value] || provincePrefixMap[selectedProv.value] || ["000"];
+                const prefixes = cityPrefixMap[selectedCity.value] || cityPrefixMap[selectedProv.value] || ["000"];
                 const selectedPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
                 
                 const opPrefix = opPrefixes[Math.floor(Math.random() * opPrefixes.length)];
-                const hlrSuffix = Math.floor(Math.random() * 10).toString();
-                const hlrCode = selectedPrefix + hlrSuffix;
-                
-                let suffix = "";
-                for (let i = 0; i < 4; i++) {
-                    suffix += Math.floor(Math.random() * 10);
+                let hlrCode;
+                if (selectedPrefix.length === 3) {
+                    hlrCode = selectedPrefix + Math.floor(Math.random() * 10);
+                } else {
+                    hlrCode = selectedPrefix;
                 }
+                const suffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
                 
                 generatedNumber.value = opPrefix + hlrCode + suffix;
             };
@@ -412,7 +411,7 @@
             return {
                 provinces, cities,
                 selectedProv, selectedCity,
-                operators, selectedOp,
+                opNames, selectedOp,
                 generatedNumber, generatePhone, formatPhone, onProvinceChange
             }
         }
