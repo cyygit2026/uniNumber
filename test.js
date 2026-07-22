@@ -137,9 +137,76 @@ const provinceSegments = {
         "中国电信": []
     },
     "甘肃省": {
-        "中国移动": ["136093", "138093", "138930", "139093", "139930", "150093", "151093", "151930", "152093", "152930", "157093", "158093", "182093", "182930", "183093", "183930", "187093", "187930", "188093", "188930", "198093", "198930"],
-        "中国联通": ["175093", "131093", "186093", "166093", "156930"],
-        "中国电信": ["180093", "173093", "189093", "199930", "153093"]
+        "兰州市": {
+            "中国移动": ["1360930", "1360931", "1360938", "1360939", "1370931", "1370938", "1380931", "1380938", "1390931", "1390938", "1500931", "1500938", "1510931", "1510938", "1520931", "1520938", "1570931", "1570938", "1580931", "1580938", "1820931", "1820938", "1870931", "1870938", "1880931", "1880938", "1980931", "1980938"],
+            "中国联通": ["1300931", "1300938", "1310931", "1310938", "1550931", "1550938", "1560931", "1560938", "1660931", "1660938", "1750931", "1750938", "1760931", "1760938", "1850931", "1850938", "1860931", "1860938"],
+            "中国电信": ["1330931", "1330938", "1530931", "1530938", "1730931", "1730938", "1770931", "1770938", "1800931", "1800938", "1810931", "1810938", "1890931", "1890938", "1990931", "1990938"]
+        },
+        "嘉峪关市": {
+            "中国移动": ["1399370", "1399371"],
+            "中国联通": ["1869377"],
+            "中国电信": ["1899371", "1899377"]
+        },
+        "金昌市": {
+            "中国移动": ["1389350", "1389351", "1399350", "1399351"],
+            "中国联通": ["1869356"],
+            "中国电信": ["1899350"]
+        },
+        "白银市": {
+            "中国移动": ["1389300", "1399300"],
+            "中国联通": ["1869431", "1869437"],
+            "中国电信": []
+        },
+        "天水市": {
+            "中国移动": ["1389381", "1389382", "1399381", "1399382"],
+            "中国联通": ["1869380"],
+            "中国电信": ["1899381", "1899382", "1899386", "1899388"]
+        },
+        "武威市": {
+            "中国移动": ["1389352", "1399352"],
+            "中国联通": ["1869352"],
+            "中国电信": ["1899352", "1899358"]
+        },
+        "张掖市": {
+            "中国移动": ["1389368", "1399368"],
+            "中国联通": ["1869360", "1869368"],
+            "中国电信": ["1899363"]
+        },
+        "平凉市": {
+            "中国移动": ["1389330", "1399330"],
+            "中国联通": ["1869333", "1869338"],
+            "中国电信": ["1899333"]
+        },
+        "酒泉市": {
+            "中国移动": ["1389371", "1399371"],
+            "中国联通": ["1869371", "1869373"],
+            "中国电信": ["1899371", "1899377"]
+        },
+        "庆阳市": {
+            "中国移动": ["1362934", "1373934", "1380934", "139934", "150934", "152934", "182934", "187934", "188934"],
+            "中国联通": ["1309935", "1309936", "1310934", "1311934", "1311939", "1311949", "176934", "186934"],
+            "中国电信": ["1330934", "1335934", "173934", "180934", "181934", "189934"]
+        },
+        "定西市": {
+            "中国移动": ["1389326", "1399326"],
+            "中国联通": ["1869321"],
+            "中国电信": ["1899324", "1899325"]
+        },
+        "陇南市": {
+            "中国移动": ["1389397", "1399397"],
+            "中国联通": ["1869395"],
+            "中国电信": ["1899394"]
+        },
+        "临夏回族自治州": {
+            "中国移动": ["1389300", "1399300"],
+            "中国联通": ["1869303"],
+            "中国电信": ["1899301", "1899302"]
+        },
+        "甘南藏族自治州": {
+            "中国移动": ["1389316", "1399316"],
+            "中国联通": ["1869410"],
+            "中国电信": []
+        }
     },
     "青海省": {
         "中国移动": ["137097", "138970", "139097", "139970", "150097", "151097", "152097", "152970", "157097", "158097", "158970", "159097", "159970", "182097", "182970", "183097", "183970", "187097", "187970", "188097", "188970", "198097", "198970"],
@@ -158,13 +225,21 @@ const provinceSegments = {
     }
 };
 
-function generatePhone(province, operator) {
+function generatePhone(province, operator, city) {
     const segments = provinceSegments[province];
     if (!segments) return null;
-    const opSegments = segments[operator];
+    
+    let opSegments;
+    if (city && segments[city]) {
+        opSegments = segments[city][operator];
+    } else if (segments[operator]) {
+        opSegments = segments[operator];
+    }
+    
     if (!opSegments || opSegments.length === 0) return null;
     const segment = opSegments[Math.floor(Math.random() * opSegments.length)];
-    const suffix = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+    const suffixLength = 11 - segment.length;
+    const suffix = Math.floor(Math.random() * Math.pow(10, suffixLength)).toString().padStart(suffixLength, '0');
     return segment + suffix;
 }
 
@@ -214,27 +289,60 @@ async function runTests() {
 
     for (const province of Object.keys(provinceSegments)) {
         console.log(`\n=== ${province} ===`);
-        for (const op of ["中国移动", "中国联通", "中国电信"]) {
-            const opSegments = provinceSegments[province][op];
-            if (!opSegments || opSegments.length === 0) {
-                console.log(`  ${op}: 无号段数据`);
-                continue;
+        
+        const segments = provinceSegments[province];
+        const hasCitySegments = segments && typeof segments === 'object' && !Array.isArray(segments) && 
+            Object.keys(segments).some(k => !['中国移动', '中国联通', '中国电信'].includes(k));
+        
+        if (hasCitySegments) {
+            for (const city of Object.keys(segments)) {
+                if (!segments[city]) continue;
+                for (const op of ["中国移动", "中国联通", "中国电信"]) {
+                    const opSegments = segments[city][op];
+                    if (!opSegments || opSegments.length === 0) continue;
+                    for (let i = 0; i < 3; i++) {
+                        const phone = generatePhone(province, op, city);
+                        if (!phone) continue;
+                        
+                        await new Promise(r => setTimeout(r, 100));
+                        const apiResult = await getLocationFromAPI(phone);
+                        
+                        const actualProvince = apiResult ? normalizeProvince(apiResult.province) : '未知';
+                        const actualCity = apiResult ? apiResult.city : '未知';
+                        if (apiResult && actualProvince === province) {
+                            console.log(`  ${city} ${op}: ✓ ${phone} -> ${apiResult.province} ${apiResult.city}`);
+                            totalPassed++;
+                        } else {
+                            console.log(`  ${city} ${op}: ✗ ${phone} -> ${apiResult ? apiResult.province + ' ' + apiResult.city : '未知'} (期望: ${province} ${city})`);
+                            totalFailed++;
+                            failedCases.push({ phone, expected: province + ' ' + city, actual: apiResult ? apiResult.province + ' ' + apiResult.city : '未知', operator: op });
+                        }
+                    }
+                }
             }
-            for (let i = 0; i < 5; i++) {
-                const phone = generatePhone(province, op);
-                if (!phone) continue;
-                
-                await new Promise(r => setTimeout(r, 100));
-                const apiResult = await getLocationFromAPI(phone);
-                
-                const actualProvince = apiResult ? normalizeProvince(apiResult.province) : '未知';
-                if (apiResult && actualProvince === province) {
-                    console.log(`  ✓ ${phone} -> ${apiResult.province}`);
-                    totalPassed++;
-                } else {
-                    console.log(`  ✗ ${phone} -> ${apiResult ? apiResult.province : '未知'} (期望: ${province})`);
-                    totalFailed++;
-                    failedCases.push({ phone, expected: province, actual: apiResult ? apiResult.province : '未知', operator: op });
+        } else {
+            for (const op of ["中国移动", "中国联通", "中国电信"]) {
+                const opSegments = segments[op];
+                if (!opSegments || opSegments.length === 0) {
+                    console.log(`  ${op}: 无号段数据`);
+                    continue;
+                }
+                for (let i = 0; i < 5; i++) {
+                    const phone = generatePhone(province, op);
+                    if (!phone) continue;
+                    
+                    await new Promise(r => setTimeout(r, 100));
+                    const apiResult = await getLocationFromAPI(phone);
+                    
+                    const actualProvince = apiResult ? normalizeProvince(apiResult.province) : '未知';
+                    if (apiResult && actualProvince === province) {
+                        console.log(`  ✓ ${phone} -> ${apiResult.province}`);
+                        totalPassed++;
+                    } else {
+                        console.log(`  ✗ ${phone} -> ${apiResult ? apiResult.province : '未知'} (期望: ${province})`);
+                        totalFailed++;
+                        failedCases.push({ phone, expected: province, actual: apiResult ? apiResult.province : '未知', operator: op });
+                    }
                 }
             }
         }
