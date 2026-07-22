@@ -164,7 +164,7 @@ function generatePhone(province, operator) {
     const opSegments = segments[operator];
     if (!opSegments || opSegments.length === 0) return null;
     const segment = opSegments[Math.floor(Math.random() * opSegments.length)];
-    const suffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const suffix = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
     return segment + suffix;
 }
 
